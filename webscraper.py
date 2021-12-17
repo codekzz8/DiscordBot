@@ -10,10 +10,18 @@ groups2 = ['I2A1', 'I2A2', 'I2A3', 'I2A4', 'I2A5', 'I2A6',
            'I2B1', 'I2B2', 'I2B3', 'I2B4', 'I2B5',
            'I2E1', 'I2E2', 'I2E3', 'I2E4',
            'I2X1', 'I2X2', 'I2X3', 'I2X4', 'I2X5', 'I2X6']
-groups3 = ['I3A1', 'I3A2', 'I3A3', 'I3A4', 'I3A5', 'I3A6', 'I3A7'
+groups3 = ['I3A1', 'I3A2', 'I3A3', 'I3A4', 'I3A5', 'I3A6', 'I3A7',
            'I3B1', 'I3B2', 'I3B3', 'I3B4', 'I3B5', 'I3B6',
            'I3E1', 'I3E2',
            'I3X1', 'I3X2', 'I3X3', 'I3X4', 'I3X5']
+
+
+def get_groups():
+    groups = []
+    groups.extend(groups1)
+    groups.extend(groups2)
+    groups.extend(groups3)
+    return groups
 
 
 def get_timetable(group):
@@ -56,5 +64,9 @@ def get_timetable(group):
             dataAsString += day[0] + '\n'
             alreadyPrinted[day[0]] = True
 
-        dataAsString += f"\t\t{day[1]} - {day[2]} | {day[3]} | {day[4]}\n"
+        dataAsString += '{line:{fill}{align}{width}}'.format(line=f'\t\t{day[1]} - {day[2]} | {day[3]}',
+                                                             fill=' ',
+                                                             align='<',
+                                                             width=40)
+        dataAsString += ' | ' + day[4] + '\n'
     return dataAsString
