@@ -124,8 +124,9 @@ async def on_message(message):
         killer_image = killer_images[killer_index]
         killer_url = killer_urls[killer_index]
         info = ws.get_killer_info(killer_url)
-        result = f'{killer_url}\n'.join(info)
-        await message.channel.send(result)
+        await message.channel.send(killer_image)
+        information = '\n'.join(info)
+        await message.channel.send(information)
 
 
 @client.event
