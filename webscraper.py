@@ -14,6 +14,9 @@ groups3 = ['I3A1', 'I3A2', 'I3A3', 'I3A4', 'I3A5', 'I3A6', 'I3A7',
            'I3B1', 'I3B2', 'I3B3', 'I3B4', 'I3B5', 'I3B6',
            'I3E1', 'I3E2',
            'I3X1', 'I3X2', 'I3X3', 'I3X4', 'I3X5']
+saved_killers = []
+saved_killer_images = []
+saved_killer_urls = []
 
 
 def get_groups():
@@ -70,3 +73,54 @@ def get_timetable(group):
                                                              width=40)
         dataAsString += ' | ' + day[4] + '\n'
     return dataAsString
+
+
+def get_killers():
+    url = "https://deadbydaylight.fandom.com/wiki/Killers#List_of_Killers"
+    html_code = urlopen(url).read().decode("utf-8")
+    soup = BeautifulSoup(html_code, 'lxml')
+
+    killers_result = soup.find_all('div', attrs={'style': 'display: inline-block; text-align:center; margin: 10px'})
+    # killers = tuples of strings where first element in the name of the killer
+    #           and the second element is the in-game name of the killer
+    killers = []
+    killer_images = []
+    killer_urls = []
+    # killers and killer_images are ordered
+    for killer in killers_result:
+        killer_atr = [elem.strip() for elem in killer.text.split(' - ')]
+        killers.append((killer_atr[0], killer_atr[1]))
+
+    for killer in killers_result:
+        killers_images = killer.findChildren('img')
+        for image in killers_images:
+            killer_images.append(image['data-src'])
+
+    killer_urls = [killer.find_next('a')['href'] for killer in killers_result]
+
+    return killers, killer_images, killer_urls
+
+
+def get_info_about_killers(killers, killer_images):
+    result = []
+
+    for killer in killers:
+        result.append(f'**{killer[0]} - {killer[1]}**\n{killer_images[killers.index((killer[0], killer[1]))]}\n')
+
+    return result
+
+
+def get_killer_info(url: str):
+    url = f"https://deadbydaylight.fandom.com{url}"
+    html_code = urlopen(url).read().decode("utf-8")
+    soup = BeautifulSoup(html_code, 'lxml')
+
+    first_paragraph = soup.find('span', attrs={'id': 'Overview'}).findNext('p')
+    details_rs = first_paragraph.find_next_siblings('p')
+    all_info = [first_paragraph.text]
+    for tag in details_rs:
+        if 'difficulty rating' in tag.text.lower():
+            break
+        all_info.append(tag.text)
+
+    return all_info

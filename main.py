@@ -11,6 +11,10 @@ client = discord.Client()
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
 
+global killers
+global killer_images
+global killer_urls
+
 
 @client.event
 async def on_voice_state_update(member, before, after):
@@ -38,8 +42,10 @@ async def on_message(message):
         command_list = ['$zdarova - greetings brother',
                         '$tell-me-joke - tells you joke in DM',
                         '$orar group - prints group(I2E2, I1A4 etc.) timetable',
-                        '$kekw - pretty obvious, no?'
-                        '$movies genre - prints list of most popular movies by genre']
+                        '$kekw - pretty obvious, no?',
+                        '$movies genre - prints list of most popular movies by genre',
+                        '$killers - print list of killers with images',
+                        '$killer [name] - prints overview about specific killer']
         command_string = '\n'.join(command_list)
         await message.channel.send(command_string)
 
@@ -92,14 +98,42 @@ async def on_message(message):
                             f'\t\t**Release date**: {line["release_date"]}\n\n'
             await message.channel.send(response)
 
+    if message.content == '$killers':
+        global killers
+        global killer_images
+        global killer_urls
+        killers, killer_images, killer_urls = ws.get_killers()
+        messages = ws.get_info_about_killers(killers, killer_images)
+        for result in messages:
+            await message.channel.send(result)
+
+    if message.content.startswith('$killer '):
+        split_string = message.content.split()
+        killer_name = ' '.join(split_string[1:]).lower()
+        if 'the ' in killer_name:
+            killer_name = killer_name[4:]
+        killer_index = -1
+        if 'killers' not in globals():
+            killers, killer_images, killer_urls = ws.get_killers()
+        for killer in killers:
+            if killer_name.lower() == killer[0].lower() or killer_name.lower() == killer[1].lower():
+                killer_index = killers.index((killer[0], killer[1]))
+        if killer_index == -1:
+            await message.channel.send('Killer does''t exist! :(')
+            return
+        killer_url = killer_urls[killer_index]
+        info = ws.get_killer_info(killer_url)
+        result = '\n'.join(info)
+        await message.channel.send(result)
+
 
 @client.event
 async def on_connect():
     await client.wait_until_ready()
     print('Gigel is up and running!')
-    general_channel = client.get_channel(309356532288585738)
+    # general_channel = client.get_channel(309356532288585738)
     # await general_channel.send(
-    #    "Gigel s-a conectat la server!\nScrie $help pentru a vedea comenzile disponibile manca-ti-as!")
+    #    "Gigel s-a conectat la server!\nScrie $help pentru a vedea comenzile disponibile!")
 
 
 client.run(TOKEN)
