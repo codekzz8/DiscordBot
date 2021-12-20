@@ -123,4 +123,6 @@ def get_killer_info(url: str):
             break
         all_info.append(tag.text)
 
+    all_info.append(url)
+
     return all_info
