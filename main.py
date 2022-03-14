@@ -1,3 +1,4 @@
+import asyncio
 import discord
 import os
 import time
@@ -5,8 +6,10 @@ import json
 from dotenv import load_dotenv
 import webscraper as ws
 import movies_api as mv
+from datetime import datetime, time, timedelta
 
-client = discord.Client()
+intents = discord.Intents.all()
+client = discord.Client(intents=intents)
 
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
@@ -14,15 +17,21 @@ TOKEN = os.getenv('TOKEN')
 global killers
 global killer_images
 global killer_urls
+global vc
 
+TIME_TO_SEND_MESSAGE = time(7, 0, 0)
 
 @client.event
 async def on_voice_state_update(member, before, after):
+    global vc
     if before.channel is None and after.channel is not None:
-        if member.discriminator == '3478':
+        if member.discriminator in ['9938', '3361', '2779', '8882', '6644', '6532', '3478']:
             voice_channel = after.channel
             time.sleep(1)
-            vc = await voice_channel.connect()
+            try:
+                vc = await voice_channel.connect()
+            except discord.errors.ClientException:
+                pass
             vc.play(discord.FFmpegPCMAudio(executable="C:/ffmpeg/bin/ffmpeg.exe",
                                            source="https://www.myinstants.com/media/sounds/yeet_ivPgINo.mp3"))
             while vc.is_playing():
@@ -30,7 +39,6 @@ async def on_voice_state_update(member, before, after):
             time.sleep(0.3)
             await member.move_to(None)
             await vc.disconnect()
-
 
 @client.event
 async def on_message(message):
@@ -128,14 +136,40 @@ async def on_message(message):
         information = '\n'.join(info)
         await message.channel.send(information)
 
-
 @client.event
 async def on_connect():
     await client.wait_until_ready()
     print('Gigel is up and running!')
-    # general_channel = client.get_channel(309356532288585738)
-    # await general_channel.send(
-    #    "Gigel s-a conectat la server!\nScrie $help pentru a vedea comenzile disponibile!")
 
+async def send_gif_daily():
+    await client.wait_until_ready()
+    user = await get_user_by_id('DBD', 3478)
+    await user.send("https://tenor.com/view/morning-positive-vibes-gif-20875150")
 
+async def check_time():
+    now = datetime.utcnow()
+    if now.time() > TIME_TO_SEND_MESSAGE:
+        tomorrow = datetime.combine(now.date() + timedelta(days=1), time(0))
+        seconds = (tomorrow - now).total_seconds()
+        await asyncio.sleep(seconds)
+    while True:
+        now = datetime.utcnow()
+        target_time = datetime.combine(now.date(), TIME_TO_SEND_MESSAGE)
+        seconds_until_target = (target_time - now).total_seconds()
+        await asyncio.sleep(seconds_until_target)
+        await send_gif_daily()
+        tomorrow = datetime.combine(now.date() + timedelta(days=1), time(0))
+        seconds = (tomorrow - now).total_seconds()
+        await asyncio.sleep(seconds)
+
+async def get_user_by_id(server_name, id):
+    servers = client.guilds
+    for server in servers:
+        if server.name == server_name:
+            users = server.members
+            for user in users:
+                if user.discriminator == str(id):
+                    return user
+
+client.loop.create_task(check_time())
 client.run(TOKEN)
